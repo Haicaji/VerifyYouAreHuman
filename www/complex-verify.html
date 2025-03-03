@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>你是人类吗?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            transition: transform 0.3s ease;
+        }
+        
+        .container:hover {
+            transform: translateY(-5px);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 40px;
+            font-size: 28px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+        }
+        
+        #verify-btn {
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+        
+        #verify-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(79, 172, 254, 0.6);
+        }
+        
+        #result {
+            margin-top: 30px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        
+        .question-box {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+        }
+        
+        .answer-input {
+            margin: 20px 0;
+            padding: 10px;
+            width: 100%;
+            max-width: 300px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 18px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .answer-input:focus {
+            border-color: #4facfe;
+        }
+        
+        .flag-box {
+            font-family: monospace;
+            font-size: 18px;
+            background-color: #000;
+            color: #0f0;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            text-align: center;
+            word-break: break-all;
+        }
+        
+        .timer {
+            font-size: 16px;
+            color: #666;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>人类身份验证</h1>
+        <p>如果你可以在5秒内回答一下问题, 我就认为你是人类, 并给你Flag</p>
+        
+        <div class="timer" id="timer">00:00</div>
+        
+        <div class="question-box" id="question-display">
+            <!-- 题目将在这里显示 -->
+        </div>
+        
+        <input type="number" id="answer-input" class="answer-input" placeholder="请输入答案">
+        
+        <button id="verify-btn">提交答案</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let startTime;
+        let timerInterval;
+        let retryMode = false; // 新增：标记是否处于重试模式
+        
+        // 开始计时器
+        function startTimer() {
+            startTime = new Date().getTime();
+            timerInterval = setInterval(updateTimer, 100);
+        }
+        
+        // 更新计时器显示
+        function updateTimer() {
+            const now = new Date().getTime();
+            const elapsedTime = (now - startTime) / 1000;
+            
+            const timerElement = document.getElementById('timer');
+            timerElement.textContent = elapsedTime.toFixed(1) + ' 秒';
+            
+            // 如果超过5秒，使计时器变红
+            if (elapsedTime > 5) {
+                timerElement.style.color = '#f00';
+            }
+        }
+        
+        // 重置计时器
+        function resetTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('timer').style.color = '#666';
+            startTimer();
+        }
+        
+        // 更新题目显示
+        function updateQuestion(question) {
+            const questionDisplay = document.getElementById('question-display');
+            questionDisplay.textContent = question;
+            document.getElementById('answer-input').value = '';
+            document.getElementById('answer-input').focus();
+        }
+        
+        // 获取新题目 - 修正函数
+        function getNewQuestion() {
+            console.log("获取新题目...");
+            // 显示加载状态
+            const btn = document.getElementById('verify-btn');
+            btn.disabled = true;
+            btn.textContent = '加载中...';
+            
+            // 清除结果显示
+            const result = document.getElementById('result');
+            result.style.display = 'none';
+            
+            fetch('/api/get-new-question', {
+                method: 'GET',
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || '获取题目失败');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("获取新题目成功:", data);
+                if (data.status === 'success' && data.new_question) {
+                    updateQuestion(data.new_question);
+                    resetTimer();
+                    // 重置按钮状态和重试模式
+                    btn.textContent = '提交答案';
+                    retryMode = false;
+                } else {
+                    throw new Error('获取新题目失败');
+                }
+            })
+            .catch(error => {
+                console.error('获取新题目失败:', error);
+                // 显示错误信息
+                result.className = 'error';
+                result.textContent = `获取新题目失败: ${error.message}`;
+                result.style.display = 'block';
+                
+                // 让用户可以重新尝试
+                btn.textContent = '重新尝试';
+            })
+            .finally(() => {
+                btn.disabled = false;
+            });
+        }
+
+        // 页面加载完成后，从cookie获取题目
+        document.addEventListener('DOMContentLoaded', function() {
+            const questionDisplay = document.getElementById('question-display');
+            const question = getCookie('math_question');
+            
+            if (question) {
+                questionDisplay.textContent = question;
+                // 显示题目后立即开始计时
+                startTimer();
+            } else {
+                questionDisplay.textContent = "无法获取验证题目，请刷新页面";
+            }
+            
+            // 让输入框自动获得焦点
+            document.getElementById('answer-input').focus();
+        });
+        
+        // 获取cookie的函数
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        document.getElementById('verify-btn').addEventListener('click', function() {
+            const btn = this;
+            const result = document.getElementById('result');
+            
+            // 如果按钮处于"再试一次"模式
+            if (retryMode) {
+                console.log("触发重试模式");
+                getNewQuestion();
+                return;
+            }
+            
+            const userAnswer = document.getElementById('answer-input').value;
+            
+            // 停止计时器
+            clearInterval(timerInterval);
+            
+            if (!userAnswer) {
+                result.className = 'error';
+                result.textContent = '请输入答案';
+                result.style.display = 'block';
+                return;
+            }
+            
+            // 更改按钮状态
+            btn.disabled = true;
+            btn.textContent = '验证中...';
+            
+            // 发送验证请求
+            fetch('/api/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    answer: userAnswer
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || '验证请求失败', { cause: data });
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                result.className = 'success';
+                result.textContent = data.message || '验证成功！';
+                
+                // 如果有flag，显示flag
+                if (data.flag) {
+                    const flagBox = document.createElement('div');
+                    flagBox.className = 'flag-box';
+                    flagBox.textContent = data.flag;
+                    result.appendChild(flagBox);
+                    
+                    // 获得flag后禁用按钮
+                    btn.disabled = true;
+                } else {
+                    // 回答正确但超时，改变按钮为"再试一次"
+                    if (data.message && data.message.includes('超过5秒')) {
+                        btn.textContent = '再试一次';
+                        retryMode = true;
+                        // 确保按钮可点击
+                        btn.disabled = false;
+                    }
+                }
+                
+                // 显示用时
+                if (data.time) {
+                    const timeInfo = document.createElement('p');
+                    timeInfo.textContent = `用时: ${data.time}`;
+                    result.appendChild(timeInfo);
+                }
+                
+                result.style.display = 'block';
+            })
+            .catch(error => {
+                result.className = 'error';
+                result.textContent = `${error.message}`;
+                result.style.display = 'block';
+                
+
+                if (error.cause && error.cause.new_question) {
+                    updateQuestion(error.cause.new_question);
+                    resetTimer(); // 重置计时器
+                } else {
+                    // 验证失败时重新开始计时
+                    startTimer();
+                }
+                
+                // 恢复按钮状态
+                btn.disabled = false;
+                btn.textContent = '提交答案';
+            })
+            .finally(() => {
+            });
+        });
+        
+        document.getElementById('answer-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('verify-btn').click();
+            }
+        });
+    </script>
+</body>
+</html>
