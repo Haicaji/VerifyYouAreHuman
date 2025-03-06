@@ -142,7 +142,7 @@ def verify_answer():
         print(f"检测到脚本请求: {reason}")
         return jsonify({
             'status': 'error',
-            'message': '不是?你真是机器人啊?'
+            'message': f'不是?你真是机器人啊?提示:{reason}'
         }), 403
     
     # 获取用户答案
