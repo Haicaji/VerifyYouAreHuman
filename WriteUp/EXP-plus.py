@@ -5,7 +5,7 @@ import time
 import random
 
 # 目标URL
-TARGET_URL = "http://127.0.0.1"
+TARGET_URL = "http://localhost:8080/"
 
 def extract_numbers(question):
     """从题目中提取两个数字"""

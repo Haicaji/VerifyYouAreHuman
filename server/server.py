@@ -5,8 +5,8 @@ import datetime
 import random
 import re
 
-# 设置全局FLAG变量
-FLAG = r"flag{NISACTF_2025}"
+# 从环境变量中获取FLAG
+FLAG = os.environ.get('DASFLAG') or os.environ.get('FLAG') or os.environ.get('GZCTF_FLAG') or "flag{TEST_Dynamic_FLAG}"
 
 app = Flask(__name__)
 

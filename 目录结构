@@ -1,0 +1,11 @@
+VerifyYouAreHuman/
+├── Dockerfile
+├── docker-entrypoint.sh
+├── LICENSE
+├── README.md
+├── server/
+│   └── server.py
+└── www/
+    ├── index.html
+    ├── complex-verify.html
+    └── easy-verify.html
