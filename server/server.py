@@ -80,6 +80,14 @@ def is_script_request():
     
     return False, "正常请求"
 
+@app.route('/reCAPTCHA-logo.png')
+def reCAPTCHA_logo():
+    return send_from_directory(WWW_FOLDER, 'reCAPTCHA-logo.png')
+
+@app.route('/all.css')
+def all_css():
+    return send_from_directory(WWW_FOLDER, 'all.css')
+
 # 路由：提供前端HTML页面
 @app.route('/')
 @app.route('/index.html')
