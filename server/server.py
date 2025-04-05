@@ -18,8 +18,8 @@ verified_cookies = {}
 
 # 生成乘法题目的函数
 def generate_math_question():
-    num1 = random.randint(100, 999)  # 3位数
-    num2 = random.randint(100, 999)  # 3位数
+    num1 = random.randint(10000000, 99999999)  # 8位数
+    num2 = random.randint(10000000, 99999999)  # 8位数
     answer = num1 * num2
     print(answer)
     question = f"{num1} x {num2} = ?"  # 使用普通字符 'x' 替代特殊的乘法符号 '×'
